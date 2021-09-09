@@ -1,0 +1,15 @@
+[package]
+name = "pep-mesh"
+version = "0.1.0"
+authors = ["PepcyCh <pepsich86@163.com>"]
+edition = "2018"
+
+[dependencies]
+bytemuck = { version = "1.7", optional = true }
+ply-rs = "0.1"
+
+[dev-dependencies]
+cgmath = "0.18"
+
+[[example]]
+name = "ply_io"
