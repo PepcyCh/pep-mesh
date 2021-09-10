@@ -201,7 +201,7 @@ where
 
     if mesh.num_vertices() > 0 {
         let mut vertex_element = ply::ElementDef::new("vertex".to_owned());
-        let vdata = mesh.vertices()[0].data(mesh).to_proprety_map();
+        let vdata = mesh.vertices().next().unwrap().data(mesh).to_proprety_map();
         for (k, v) in &vdata.map {
             let prop = ply::PropertyDef::new(k.to_string(), get_property_type(v));
             vertex_element.properties.add(prop);
@@ -211,7 +211,7 @@ where
         let mut vertices = Vec::with_capacity(mesh.num_vertices());
         for vref in mesh.vertices() {
             let mut vertex = ply::DefaultElement::new();
-            let vdata = mesh.vertex_data(vref).to_proprety_map();
+            let vdata = mesh.vertex_data(&vref).to_proprety_map();
             for (k, v) in &vdata.map {
                 vertex.insert(k.to_string(), get_ply_property(v));
             }
@@ -225,7 +225,7 @@ where
         let mut face_element = ply::ElementDef::new("face".to_owned());
         let prop = ply::PropertyDef::new("vertex_index".to_owned(), ply::PropertyType::List(ply::ScalarType::UChar, ply::ScalarType::Int));
         face_element.properties.add(prop);
-        let fdata = mesh.faces()[0].data(mesh).to_proprety_map();
+        let fdata = mesh.faces().next().unwrap().data(mesh).to_proprety_map();
         for (k, v) in &fdata.map {
             let prop = ply::PropertyDef::new(k.to_string(), get_property_type(v));
             face_element.properties.add(prop);
@@ -234,7 +234,7 @@ where
 
         let mut faces = Vec::with_capacity(num_faces);
         for fref in mesh.faces() {
-            if fref.is_boundary {
+            if fref.is_boundary(mesh) {
                 continue;
             }
 
@@ -250,7 +250,7 @@ where
 
             let mut face = ply::DefaultElement::new();
             face.insert("vertex_index".to_owned(), ply::Property::ListInt(vertex_index));
-            let fdata = mesh.face_data(fref).to_proprety_map();
+            let fdata = mesh.face_data(&fref).to_proprety_map();
             for (k, v) in &fdata.map {
                 face.insert(k.to_string(), get_ply_property(v));
             }
@@ -265,7 +265,7 @@ where
         edge_element.properties.add(prop);
         let prop = ply::PropertyDef::new("vertex2".to_owned(), ply::PropertyType::Scalar(ply::ScalarType::Int));
         edge_element.properties.add(prop);
-        let edata = mesh.halfedges()[0].data(mesh).to_proprety_map();
+        let edata = mesh.halfedges().next().unwrap().data(mesh).to_proprety_map();
         for (k, v) in &edata.map {
             let prop = ply::PropertyDef::new(k.to_string(), get_property_type(v));
             edge_element.properties.add(prop);
@@ -275,8 +275,8 @@ where
         let mut edges = Vec::with_capacity(mesh.num_edges());
         for heref in mesh.halfedges() {
             let twin = heref.twin(mesh);
-            let v1 = heref.vertex;
-            let v2 = twin.vertex;
+            let v1 = mesh.halfedges[heref.id].vertex;
+            let v2 = mesh.halfedges[twin.id].vertex;
             if v1 > v2 {
                 continue;
             }
@@ -284,7 +284,7 @@ where
             let mut edge = ply::DefaultElement::new();
             edge.insert("vertex1".to_owned(), ply::Property::Int(v1 as i32));
             edge.insert("vertex2".to_owned(), ply::Property::Int(v2 as i32));
-            let edata = mesh.edge_data(heref).to_proprety_map();
+            let edata = mesh.edge_data(&heref).to_proprety_map();
             for (k, v) in &edata.map {
                 edge.insert(k.to_string(), get_ply_property(v));
             }

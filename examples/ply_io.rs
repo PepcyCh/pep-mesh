@@ -86,7 +86,7 @@ impl ToPropertyMap for VData {
 }
 
 fn main() {
-    let path = "examples/io_test_input.ply";
+    let path = "examples/color_cube.ply";
     let mesh: HalfEdgeMesh<VData, (), ()> = io::ply::load_to_halfedge(path).expect("Failed to load ply mesh");
 
     println!("# vertices: {}", mesh.num_vertices());
@@ -94,6 +94,6 @@ fn main() {
     println!("# faces (w/ boundary faces): {}", mesh.num_faces_with_boundary());
     println!("# faces (w/o boundary faces): {}", mesh.num_faces());
 
-    let path = "io_test_output.ply";
+    let path = "color_cube.ply";
     io::ply::save_halfedge(path, &mesh).expect("Failed to save ply mesh");
 }

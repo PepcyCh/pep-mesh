@@ -13,3 +13,6 @@ cgmath = "0.18"
 
 [[example]]
 name = "ply_io"
+
+[[example]]
+name = "catmull_clark"
