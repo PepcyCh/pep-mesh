@@ -128,7 +128,14 @@ where
     let mut faces = Vec::with_capacity(faces_list.len());
     let mut faces_data = HashMap::with_capacity(faces_list.len());
     for mut f in faces_list {
-        if let Some(vertex_index) = f.map.remove("vertex_index".into()) {
+        let vertex_index = if f.map.contains_key("vertex_index") {
+            f.map.remove("vertex_index".into())
+        } else if f.map.contains_key("vertex_indices") {
+            f.map.remove("vertex_indices".into())
+        } else {
+            None
+        };
+        if let Some(vertex_index) = vertex_index {
             if let Property::I32List(vertex_index) = vertex_index {
                 let vertex_index = vertex_index
                     .iter()
