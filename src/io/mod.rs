@@ -7,9 +7,7 @@ pub struct LoadError {
 
 impl LoadError {
     pub(crate) fn new(info: String) -> Self {
-        Self {
-            info,
-        }
+        Self { info }
     }
 }
 
@@ -28,9 +26,7 @@ pub struct SaveError {
 
 impl SaveError {
     pub(crate) fn new(info: String) -> Self {
-        Self {
-            info,
-        }
+        Self { info }
     }
 }
 

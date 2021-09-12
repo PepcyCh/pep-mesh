@@ -13,10 +13,7 @@ pub struct TriMesh {
 }
 
 impl TriMesh {
-    pub fn attribute<Str: Into<Cow<'static, str>>>(
-        &self,
-        name: Str,
-    ) -> Option<&VertexAttribute> {
+    pub fn attribute<Str: Into<Cow<'static, str>>>(&self, name: Str) -> Option<&VertexAttribute> {
         self.vertex_attributes.get(&name.into())
     }
 

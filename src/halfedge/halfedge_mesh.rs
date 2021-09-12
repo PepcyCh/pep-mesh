@@ -21,6 +21,7 @@ where
     /// create a halfedge mesh from topology (`in_faces`) and data
     ///
     /// Notice:
+    /// * input must be a manifold, or this method will panic or run in an endless loop
     /// * if `(u, v)` is key of `in_edges_data`, `u < v` must be hold
     pub fn new(
         in_faces: Vec<Vec<usize>>,
@@ -28,7 +29,10 @@ where
         mut in_edges_data: HashMap<(usize, usize), EData>,
         mut in_faces_data: HashMap<usize, FData>,
     ) -> Self {
-        let token = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis();
+        let token = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_millis();
 
         let num_vertices_input = *in_faces.iter().flatten().max().unwrap() + 1;
 
@@ -55,7 +59,11 @@ where
                         halfedge: usize::MAX,
                     };
                     vertices_map.insert(vid_input, vert.id);
-                    vertices_data.push(in_vertices_data.remove(&vid_input).unwrap_or(VData::default()));
+                    vertices_data.push(
+                        in_vertices_data
+                            .remove(&vid_input)
+                            .unwrap_or(VData::default()),
+                    );
                     vertices.push(vert);
                 }
             }
@@ -192,7 +200,7 @@ where
 
                 faces.push(fake_face);
                 faces_data.push(FData::default());
-            } 
+            }
         }
 
         for v in &mut vertices {
@@ -228,7 +236,11 @@ impl<VData, EData, FData> HalfEdgeMesh<VData, EData, FData> {
 
     /// vertices created after this has been called will not be iterated
     pub fn vertices(&self) -> VertexIter {
-        VertexIter { token: self.token, total: self.vertices.len(), curr: 0 }
+        VertexIter {
+            token: self.token,
+            total: self.vertices.len(),
+            curr: 0,
+        }
     }
 
     pub fn num_vertices(&self) -> usize {
@@ -265,14 +277,23 @@ impl<VData, EData, FData> HalfEdgeMesh<VData, EData, FData> {
 
     /// half-edges created after this has been called will not be iterated
     pub fn halfedges(&self) -> HalfEdgeIter {
-        HalfEdgeIter { token: self.token, total: self.halfedges.len(), curr: 0 }
+        HalfEdgeIter {
+            token: self.token,
+            total: self.halfedges.len(),
+            curr: 0,
+        }
     }
 
     pub fn num_edges(&self) -> usize {
         self.halfedges.len() / 2
     }
 
-    pub fn create_edge(&mut self, vertex1: &VertexRef, vertex2: &VertexRef, data: EData) -> (HalfEdgeRef, HalfEdgeRef) {
+    pub fn create_edge(
+        &mut self,
+        vertex1: &VertexRef,
+        vertex2: &VertexRef,
+        data: EData,
+    ) -> (HalfEdgeRef, HalfEdgeRef) {
         let halfedge1 = HalfEdge {
             id: self.halfedges.len(),
             edge: self.edges_data.len(),
@@ -319,7 +340,11 @@ impl<VData, EData, FData> HalfEdgeMesh<VData, EData, FData> {
 
     /// faces created after this has been called will not be iterated
     pub fn faces(&self) -> FaceIter {
-        FaceIter { token: self.token, total: self.faces.len(), curr: 0 }
+        FaceIter {
+            token: self.token,
+            total: self.faces.len(),
+            curr: 0,
+        }
     }
 
     /// Notice: this method is not O(1)

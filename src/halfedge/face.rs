@@ -13,22 +13,34 @@ pub struct FaceRef {
 }
 
 impl FaceRef {
-    pub fn is_boundary<VData, EData, FData>(&self, mesh: &HalfEdgeMesh<VData, EData, FData>) -> bool {
+    pub fn is_boundary<VData, EData, FData>(
+        &self,
+        mesh: &HalfEdgeMesh<VData, EData, FData>,
+    ) -> bool {
         assert!(mesh.is_face_ref_valid(self));
         mesh.faces[self.id].is_boundary
     }
-    
-    pub fn data<'a, VData, EData, FData>(&self, mesh: &'a HalfEdgeMesh<VData, EData, FData>) -> &'a FData {
+
+    pub fn data<'a, VData, EData, FData>(
+        &self,
+        mesh: &'a HalfEdgeMesh<VData, EData, FData>,
+    ) -> &'a FData {
         assert!(mesh.is_face_ref_valid(self));
         mesh.face_data(self)
     }
 
-    pub fn data_mut<'a, VData, EData, FData>(&self, mesh: &'a mut HalfEdgeMesh<VData, EData, FData>) -> &'a mut FData {
+    pub fn data_mut<'a, VData, EData, FData>(
+        &self,
+        mesh: &'a mut HalfEdgeMesh<VData, EData, FData>,
+    ) -> &'a mut FData {
         assert!(mesh.is_face_ref_valid(self));
         mesh.face_data_mut(self)
     }
 
-    pub fn halfedge<VData, EData, FData>(&self, mesh: &HalfEdgeMesh<VData, EData, FData>) -> HalfEdgeRef {
+    pub fn halfedge<VData, EData, FData>(
+        &self,
+        mesh: &HalfEdgeMesh<VData, EData, FData>,
+    ) -> HalfEdgeRef {
         assert!(mesh.is_face_ref_valid(self));
         let halfedge = mesh.faces[self.id].halfedge;
         assert!(halfedge < mesh.halfedges.len());
@@ -37,9 +49,33 @@ impl FaceRef {
             token: self.token,
         }
     }
-    
-    pub fn vertex<VData, EData, FData>(&self, mesh: &HalfEdgeMesh<VData, EData, FData>) -> VertexRef {
+
+    pub fn vertex<VData, EData, FData>(
+        &self,
+        mesh: &HalfEdgeMesh<VData, EData, FData>,
+    ) -> VertexRef {
         self.halfedge(mesh).vertex(mesh)
+    }
+
+    pub fn next_to_boundary<VData, EData, FData>(
+        &self,
+        mesh: &HalfEdgeMesh<VData, EData, FData>,
+    ) -> bool {
+        assert!(mesh.is_face_ref_valid(self));
+        if self.is_boundary(mesh) {
+            return false;
+        }
+        let mut he = self.halfedge(mesh);
+        loop {
+            if he.on_boundary(mesh) {
+                return true;
+            }
+            he = he.next(mesh);
+            if he == self.halfedge(mesh) {
+                break;
+            }
+        }
+        false
     }
 
     pub fn degree<VData, EData, FData>(&self, mesh: &HalfEdgeMesh<VData, EData, FData>) -> u32 {
@@ -56,7 +92,11 @@ impl FaceRef {
         degree
     }
 
-    pub fn set_halfedge<VData, EData, FData>(&self, mesh: &mut HalfEdgeMesh<VData, EData, FData>, halfedge: &HalfEdgeRef) {
+    pub fn set_halfedge<VData, EData, FData>(
+        &self,
+        mesh: &mut HalfEdgeMesh<VData, EData, FData>,
+        halfedge: &HalfEdgeRef,
+    ) {
         assert!(mesh.is_face_ref_valid(self) && mesh.is_halfedge_ref_valid(halfedge));
         mesh.faces[self.id].halfedge = halfedge.id;
     }

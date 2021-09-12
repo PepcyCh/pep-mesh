@@ -1,4 +1,4 @@
-use super::{FaceRef, HalfEdgeRef, HalfEdgeMesh};
+use super::{FaceRef, HalfEdgeMesh, HalfEdgeRef};
 
 pub(crate) struct Vertex {
     pub(crate) id: usize,
@@ -12,17 +12,26 @@ pub struct VertexRef {
 }
 
 impl VertexRef {
-    pub fn data<'a, VData, EData, FData>(&self, mesh: &'a HalfEdgeMesh<VData, EData, FData>) -> &'a VData {
+    pub fn data<'a, VData, EData, FData>(
+        &self,
+        mesh: &'a HalfEdgeMesh<VData, EData, FData>,
+    ) -> &'a VData {
         assert!(mesh.is_vertex_ref_valid(self));
         mesh.vertex_data(self)
     }
 
-    pub fn data_mut<'a, VData, EData, FData>(&self, mesh: &'a mut HalfEdgeMesh<VData, EData, FData>) -> &'a mut VData {
+    pub fn data_mut<'a, VData, EData, FData>(
+        &self,
+        mesh: &'a mut HalfEdgeMesh<VData, EData, FData>,
+    ) -> &'a mut VData {
         assert!(mesh.is_vertex_ref_valid(self));
         mesh.vertex_data_mut(self)
     }
 
-    pub fn halfedge<VData, EData, FData>(&self, mesh: &HalfEdgeMesh<VData, EData, FData>) -> HalfEdgeRef {
+    pub fn halfedge<VData, EData, FData>(
+        &self,
+        mesh: &HalfEdgeMesh<VData, EData, FData>,
+    ) -> HalfEdgeRef {
         assert!(mesh.is_vertex_ref_valid(self));
         let halfedge = mesh.vertices[self.id].halfedge;
         assert!(halfedge < mesh.halfedges.len());
@@ -31,13 +40,19 @@ impl VertexRef {
             token: self.token,
         }
     }
-    
-    pub fn face<'a, VData, EData, FData>(&self, mesh: &HalfEdgeMesh<VData, EData, FData>) -> FaceRef {
+
+    pub fn face<'a, VData, EData, FData>(
+        &self,
+        mesh: &HalfEdgeMesh<VData, EData, FData>,
+    ) -> FaceRef {
         assert!(mesh.is_vertex_ref_valid(self));
         self.halfedge(mesh).face(mesh)
     }
 
-    pub fn on_boundary<VData, EData, FData>(&self, mesh: &HalfEdgeMesh<VData, EData, FData>) -> bool {
+    pub fn on_boundary<VData, EData, FData>(
+        &self,
+        mesh: &HalfEdgeMesh<VData, EData, FData>,
+    ) -> bool {
         assert!(mesh.is_vertex_ref_valid(self));
         let mut he = self.halfedge(mesh);
         loop {
@@ -66,7 +81,11 @@ impl VertexRef {
         degree
     }
 
-    pub fn set_halfedge<VData, EData, FData>(&self, mesh: &mut HalfEdgeMesh<VData, EData, FData>, halfedge: &HalfEdgeRef) {
+    pub fn set_halfedge<VData, EData, FData>(
+        &self,
+        mesh: &mut HalfEdgeMesh<VData, EData, FData>,
+        halfedge: &HalfEdgeRef,
+    ) {
         assert!(mesh.is_vertex_ref_valid(self) && mesh.is_halfedge_ref_valid(halfedge));
         mesh.vertices[self.id].halfedge = halfedge.id;
     }

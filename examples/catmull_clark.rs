@@ -1,7 +1,13 @@
 use std::collections::HashMap;
 
 use cgmath::{ElementWise, EuclideanSpace, Point3};
-use pep_mesh::{halfedge::{HalfEdgeMesh, VertexRef}, io::{self, ply::{Property, PropertyMap, ToPropertyMap}}};
+use pep_mesh::{
+    halfedge::{HalfEdgeMesh, VertexRef},
+    io::{
+        self,
+        ply::{Property, PropertyMap, ToPropertyMap},
+    },
+};
 
 struct VData {
     pos: Point3<f32>,
@@ -19,26 +25,20 @@ impl Default for VData {
 
 impl From<PropertyMap> for VData {
     fn from(props: PropertyMap) -> Self {
-        let x = props.map.get("x").map_or(0.0, |prop| {
-            match prop {
-                Property::F32(val) => *val,
-                Property::F64(val) => *val as f32,
-                _ => 0.0,
-            }
+        let x = props.map.get("x").map_or(0.0, |prop| match prop {
+            Property::F32(val) => *val,
+            Property::F64(val) => *val as f32,
+            _ => 0.0,
         });
-        let y = props.map.get("y").map_or(0.0, |prop| {
-            match prop {
-                Property::F32(val) => *val,
-                Property::F64(val) => *val as f32,
-                _ => 0.0,
-            }
+        let y = props.map.get("y").map_or(0.0, |prop| match prop {
+            Property::F32(val) => *val,
+            Property::F64(val) => *val as f32,
+            _ => 0.0,
         });
-        let z = props.map.get("z").map_or(0.0, |prop| {
-            match prop {
-                Property::F32(val) => *val,
-                Property::F64(val) => *val as f32,
-                _ => 0.0,
-            }
+        let z = props.map.get("z").map_or(0.0, |prop| match prop {
+            Property::F32(val) => *val,
+            Property::F64(val) => *val as f32,
+            _ => 0.0,
         });
         let pos = Point3::new(x, y, z);
 
@@ -137,7 +137,13 @@ fn catmull_clark(mesh: &mut HalfEdgeMesh<VData, EData, FData>, iter_times: u32) 
                         if pos_f1.is_some() && pos_f2.is_some() {
                             let pos_f1 = pos_f1.unwrap();
                             let pos_f2 = pos_f2.unwrap();
-                            he.data_mut(mesh).new_pos = Some(pos_v1.add_element_wise(pos_v2).add_element_wise(pos_f1).add_element_wise(pos_f2) / 4.0);
+                            he.data_mut(mesh).new_pos = Some(
+                                pos_v1
+                                    .add_element_wise(pos_v2)
+                                    .add_element_wise(pos_f1)
+                                    .add_element_wise(pos_f2)
+                                    / 4.0,
+                            );
                         } else {
                             he.data_mut(mesh).new_pos = Some(pos_v1.midpoint(pos_v2));
                         }
@@ -170,7 +176,11 @@ fn catmull_clark(mesh: &mut HalfEdgeMesh<VData, EData, FData>, iter_times: u32) 
                         }
                         let pos_e1 = he.vertex(mesh).data(mesh).pos;
                         let pos_e2 = he.next(mesh).next(mesh).vertex(mesh).data(mesh).pos;
-                        v.data_mut(mesh).new_pos = Some((0.75 * pos_v).add_element_wise(0.125 * pos_e1).add_element_wise(0.125 * pos_e2));
+                        v.data_mut(mesh).new_pos = Some(
+                            (0.75 * pos_v)
+                                .add_element_wise(0.125 * pos_e1)
+                                .add_element_wise(0.125 * pos_e2),
+                        );
                     } else {
                         let mut count = 0.0;
                         let mut sum = Point3::new(0.0, 0.0, 0.0);
@@ -189,7 +199,8 @@ fn catmull_clark(mesh: &mut HalfEdgeMesh<VData, EData, FData>, iter_times: u32) 
                                 break;
                             }
                         }
-                        v.data_mut(mesh).new_pos = Some(((count - 2.0) * pos_v).add_element_wise(sum / count) / count);
+                        v.data_mut(mesh).new_pos =
+                            Some(((count - 2.0) * pos_v).add_element_wise(sum / count) / count);
                     }
                 }
                 he = he.next(mesh);
@@ -207,7 +218,10 @@ fn catmull_clark(mesh: &mut HalfEdgeMesh<VData, EData, FData>, iter_times: u32) 
             let mut he = face.halfedge(mesh);
             loop {
                 if he.data(mesh).new_vert.is_none() {
-                    he.data_mut(mesh).new_vert = Some(mesh.create_vertex(VData { pos: he.data(mesh).new_pos.unwrap(), new_pos: None }));
+                    he.data_mut(mesh).new_vert = Some(mesh.create_vertex(VData {
+                        pos: he.data(mesh).new_pos.unwrap(),
+                        new_pos: None,
+                    }));
                     halfedges.push(he);
                 }
                 he = he.next(mesh);
@@ -238,7 +252,10 @@ fn catmull_clark(mesh: &mut HalfEdgeMesh<VData, EData, FData>, iter_times: u32) 
             if face.is_boundary(mesh) {
                 continue;
             }
-            let fv = mesh.create_vertex(VData { pos: face.data(mesh).new_pos.unwrap(), new_pos: None });
+            let fv = mesh.create_vertex(VData {
+                pos: face.data(mesh).new_pos.unwrap(),
+                new_pos: None,
+            });
             *face.data_mut(mesh) = FData::default();
             let mut new_edges = vec![];
             let mut new_faces = vec![];
@@ -280,11 +297,7 @@ fn catmull_clark(mesh: &mut HalfEdgeMesh<VData, EData, FData>, iter_times: u32) 
             }
 
             for i in 0..count {
-                let j = if i == 0 {
-                    2 * count - 1
-                } else {
-                    2 * i - 1
-                };
+                let j = if i == 0 { 2 * count - 1 } else { 2 * i - 1 };
                 let edge_j = new_edges[j];
                 new_edges[2 * i].set_next(mesh, &edge_j);
                 new_faces[i].set_halfedge(mesh, &edge_j);
@@ -304,7 +317,8 @@ fn catmull_clark(mesh: &mut HalfEdgeMesh<VData, EData, FData>, iter_times: u32) 
 fn main() {
     // let path = "examples/cube.ply";
     let path = "examples/boundary.ply";
-    let mut mesh: HalfEdgeMesh<VData, EData, FData> = io::ply::load_to_halfedge(path).expect("Failed to load ply mesh");
+    let mut mesh: HalfEdgeMesh<VData, EData, FData> =
+        io::ply::load_to_halfedge(path).expect("Failed to load ply mesh");
     catmull_clark(&mut mesh, 4);
 
     let path = "subdivided.ply";

@@ -1,6 +1,10 @@
 use std::{borrow::Cow, collections::HashMap};
 
-use ply_rs::{parser, ply::{self, Addable}, writer};
+use ply_rs::{
+    parser,
+    ply::{self, Addable},
+    writer,
+};
 
 use crate::{halfedge::HalfEdgeMesh, io::LoadError};
 
@@ -87,7 +91,9 @@ impl ply::PropertyAccess for PropertyMap {
     }
 }
 
-pub fn load_to_halfedge<Path, VData, EData, FData>(path: Path) -> Result<HalfEdgeMesh<VData, EData, FData>, LoadError>
+pub fn load_to_halfedge<Path, VData, EData, FData>(
+    path: Path,
+) -> Result<HalfEdgeMesh<VData, EData, FData>, LoadError>
 where
     Path: AsRef<std::path::Path>,
     VData: Default + FromPropertyMap,
@@ -101,7 +107,9 @@ where
     let face_parser = parser::Parser::<PropertyMap>::new();
     let edge_parser = parser::Parser::<PropertyMap>::new();
 
-    let header = vertex_parser.read_header(&mut reader).map_err(|err| LoadError::new(err.to_string()))?;
+    let header = vertex_parser
+        .read_header(&mut reader)
+        .map_err(|err| LoadError::new(err.to_string()))?;
 
     let mut vertices_list = vec![];
     let mut faces_list = vec![];
@@ -110,15 +118,18 @@ where
     for (_, element) in &header.elements {
         match element.name.as_ref() {
             "vertex" => {
-                vertices_list = vertex_parser.read_payload_for_element(&mut reader, &element, &header)
+                vertices_list = vertex_parser
+                    .read_payload_for_element(&mut reader, &element, &header)
                     .map_err(|err| LoadError::new(err.to_string()))?
             }
             "face" => {
-                faces_list = face_parser.read_payload_for_element(&mut reader, &element, &header)
+                faces_list = face_parser
+                    .read_payload_for_element(&mut reader, &element, &header)
                     .map_err(|err| LoadError::new(err.to_string()))?
             }
             "edge" => {
-                edges_list = edge_parser.read_payload_for_element(&mut reader, &element, &header)
+                edges_list = edge_parser
+                    .read_payload_for_element(&mut reader, &element, &header)
                     .map_err(|err| LoadError::new(err.to_string()))?
             }
             _ => {}
@@ -137,31 +148,19 @@ where
         };
         if let Some(vertex_index) = vertex_index {
             if let Property::I32List(vertex_index) = vertex_index {
-                let vertex_index = vertex_index
-                    .iter()
-                    .map(|i| *i as usize)
-                    .collect::<Vec<_>>();
+                let vertex_index = vertex_index.iter().map(|i| *i as usize).collect::<Vec<_>>();
                 faces_data.insert(faces.len(), FData::from_proprety_map(f));
                 faces.push(vertex_index);
             } else if let Property::U32List(vertex_index) = vertex_index {
-                let vertex_index = vertex_index
-                    .iter()
-                    .map(|i| *i as usize)
-                    .collect::<Vec<_>>();
+                let vertex_index = vertex_index.iter().map(|i| *i as usize).collect::<Vec<_>>();
                 faces_data.insert(faces.len(), FData::from_proprety_map(f));
                 faces.push(vertex_index);
             } else if let Property::I16List(vertex_index) = vertex_index {
-                let vertex_index = vertex_index
-                    .iter()
-                    .map(|i| *i as usize)
-                    .collect::<Vec<_>>();
+                let vertex_index = vertex_index.iter().map(|i| *i as usize).collect::<Vec<_>>();
                 faces_data.insert(faces.len(), FData::from_proprety_map(f));
                 faces.push(vertex_index);
             } else if let Property::U16List(vertex_index) = vertex_index {
-                let vertex_index = vertex_index
-                    .iter()
-                    .map(|i| *i as usize)
-                    .collect::<Vec<_>>();
+                let vertex_index = vertex_index.iter().map(|i| *i as usize).collect::<Vec<_>>();
                 faces_data.insert(faces.len(), FData::from_proprety_map(f));
                 faces.push(vertex_index);
             }
@@ -193,10 +192,18 @@ where
         }
     }
 
-    Ok(HalfEdgeMesh::new(faces, vertices_data, edges_data, faces_data))
+    Ok(HalfEdgeMesh::new(
+        faces,
+        vertices_data,
+        edges_data,
+        faces_data,
+    ))
 }
 
-pub fn save_halfedge<Path, VData, EData, FData>(path: Path, mesh: &HalfEdgeMesh<VData, EData, FData>) -> Result<(), SaveError>
+pub fn save_halfedge<Path, VData, EData, FData>(
+    path: Path,
+    mesh: &HalfEdgeMesh<VData, EData, FData>,
+) -> Result<(), SaveError>
 where
     Path: AsRef<std::path::Path>,
     VData: Default + ToPropertyMap,
@@ -226,11 +233,14 @@ where
         }
         ply.payload.insert("vertex".to_owned(), vertices);
     }
-    
+
     let num_faces = mesh.num_faces();
     if num_faces > 0 {
         let mut face_element = ply::ElementDef::new("face".to_owned());
-        let prop = ply::PropertyDef::new("vertex_index".to_owned(), ply::PropertyType::List(ply::ScalarType::UChar, ply::ScalarType::Int));
+        let prop = ply::PropertyDef::new(
+            "vertex_index".to_owned(),
+            ply::PropertyType::List(ply::ScalarType::UChar, ply::ScalarType::Int),
+        );
         face_element.properties.add(prop);
         let fdata = mesh.faces().next().unwrap().data(mesh).to_proprety_map();
         for (k, v) in &fdata.map {
@@ -256,7 +266,10 @@ where
             }
 
             let mut face = ply::DefaultElement::new();
-            face.insert("vertex_index".to_owned(), ply::Property::ListInt(vertex_index));
+            face.insert(
+                "vertex_index".to_owned(),
+                ply::Property::ListInt(vertex_index),
+            );
             let fdata = mesh.face_data(&fref).to_proprety_map();
             for (k, v) in &fdata.map {
                 face.insert(k.to_string(), get_ply_property(v));
@@ -265,14 +278,25 @@ where
         }
         ply.payload.insert("face".to_owned(), faces);
     }
-    
+
     if mesh.num_edges() > 0 {
         let mut edge_element = ply::ElementDef::new("edge".to_owned());
-        let prop = ply::PropertyDef::new("vertex1".to_owned(), ply::PropertyType::Scalar(ply::ScalarType::Int));
+        let prop = ply::PropertyDef::new(
+            "vertex1".to_owned(),
+            ply::PropertyType::Scalar(ply::ScalarType::Int),
+        );
         edge_element.properties.add(prop);
-        let prop = ply::PropertyDef::new("vertex2".to_owned(), ply::PropertyType::Scalar(ply::ScalarType::Int));
+        let prop = ply::PropertyDef::new(
+            "vertex2".to_owned(),
+            ply::PropertyType::Scalar(ply::ScalarType::Int),
+        );
         edge_element.properties.add(prop);
-        let edata = mesh.halfedges().next().unwrap().data(mesh).to_proprety_map();
+        let edata = mesh
+            .halfedges()
+            .next()
+            .unwrap()
+            .data(mesh)
+            .to_proprety_map();
         for (k, v) in &edata.map {
             let prop = ply::PropertyDef::new(k.to_string(), get_property_type(v));
             edge_element.properties.add(prop);
@@ -300,11 +324,15 @@ where
         ply.payload.insert("edge".to_owned(), edges);
     }
 
-    ply.make_consistent().map_err(|err| SaveError::new(err.to_string()))?;
+    ply.make_consistent()
+        .map_err(|err| SaveError::new(err.to_string()))?;
 
-    let mut file = std::fs::File::create(path.as_ref()).map_err(|err| SaveError::new(err.to_string()))?;
+    let mut file =
+        std::fs::File::create(path.as_ref()).map_err(|err| SaveError::new(err.to_string()))?;
     let writer = writer::Writer::new();
-    writer.write_ply(&mut file, &mut ply).map_err(|err| SaveError::new(err.to_string()))?;
+    writer
+        .write_ply(&mut file, &mut ply)
+        .map_err(|err| SaveError::new(err.to_string()))?;
 
     Ok(())
 }
@@ -319,14 +347,30 @@ fn get_property_type(prop: &Property) -> ply::PropertyType {
         Property::U32(_) => ply::PropertyType::Scalar(ply::ScalarType::UInt),
         Property::F32(_) => ply::PropertyType::Scalar(ply::ScalarType::Float),
         Property::F64(_) => ply::PropertyType::Scalar(ply::ScalarType::Double),
-        Property::I8List(_) => ply::PropertyType::List(ply::ScalarType::UChar, ply::ScalarType::Char),
-        Property::U8List(_) => ply::PropertyType::List(ply::ScalarType::UChar, ply::ScalarType::UChar),
-        Property::I16List(_) => ply::PropertyType::List(ply::ScalarType::UChar, ply::ScalarType::Short),
-        Property::U16List(_) => ply::PropertyType::List(ply::ScalarType::UChar, ply::ScalarType::UShort),
-        Property::I32List(_) => ply::PropertyType::List(ply::ScalarType::UChar, ply::ScalarType::Int),
-        Property::U32List(_) => ply::PropertyType::List(ply::ScalarType::UChar, ply::ScalarType::UInt),
-        Property::F32List(_) => ply::PropertyType::List(ply::ScalarType::UChar, ply::ScalarType::Float),
-        Property::F64List(_) => ply::PropertyType::List(ply::ScalarType::UChar, ply::ScalarType::Double),
+        Property::I8List(_) => {
+            ply::PropertyType::List(ply::ScalarType::UChar, ply::ScalarType::Char)
+        }
+        Property::U8List(_) => {
+            ply::PropertyType::List(ply::ScalarType::UChar, ply::ScalarType::UChar)
+        }
+        Property::I16List(_) => {
+            ply::PropertyType::List(ply::ScalarType::UChar, ply::ScalarType::Short)
+        }
+        Property::U16List(_) => {
+            ply::PropertyType::List(ply::ScalarType::UChar, ply::ScalarType::UShort)
+        }
+        Property::I32List(_) => {
+            ply::PropertyType::List(ply::ScalarType::UChar, ply::ScalarType::Int)
+        }
+        Property::U32List(_) => {
+            ply::PropertyType::List(ply::ScalarType::UChar, ply::ScalarType::UInt)
+        }
+        Property::F32List(_) => {
+            ply::PropertyType::List(ply::ScalarType::UChar, ply::ScalarType::Float)
+        }
+        Property::F64List(_) => {
+            ply::PropertyType::List(ply::ScalarType::UChar, ply::ScalarType::Double)
+        }
     }
 }
 

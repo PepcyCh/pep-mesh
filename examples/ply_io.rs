@@ -1,7 +1,13 @@
 use std::collections::HashMap;
 
 use cgmath::Point3;
-use pep_mesh::{halfedge::HalfEdgeMesh, io::{self, ply::{Property, PropertyMap, ToPropertyMap}}};
+use pep_mesh::{
+    halfedge::HalfEdgeMesh,
+    io::{
+        self,
+        ply::{Property, PropertyMap, ToPropertyMap},
+    },
+};
 
 struct VData {
     position: Point3<f32>,
@@ -19,53 +25,38 @@ impl Default for VData {
 
 impl From<PropertyMap> for VData {
     fn from(props: PropertyMap) -> Self {
-        let x = props.map.get("x").map_or(0.0, |prop| {
-            match prop {
-                Property::F32(val) => *val,
-                Property::F64(val) => *val as f32,
-                _ => 0.0,
-            }
+        let x = props.map.get("x").map_or(0.0, |prop| match prop {
+            Property::F32(val) => *val,
+            Property::F64(val) => *val as f32,
+            _ => 0.0,
         });
-        let y = props.map.get("y").map_or(0.0, |prop| {
-            match prop {
-                Property::F32(val) => *val,
-                Property::F64(val) => *val as f32,
-                _ => 0.0,
-            }
+        let y = props.map.get("y").map_or(0.0, |prop| match prop {
+            Property::F32(val) => *val,
+            Property::F64(val) => *val as f32,
+            _ => 0.0,
         });
-        let z = props.map.get("z").map_or(0.0, |prop| {
-            match prop {
-                Property::F32(val) => *val,
-                Property::F64(val) => *val as f32,
-                _ => 0.0,
-            }
+        let z = props.map.get("z").map_or(0.0, |prop| match prop {
+            Property::F32(val) => *val,
+            Property::F64(val) => *val as f32,
+            _ => 0.0,
         });
         let position = Point3::new(x, y, z);
 
-        let r = props.map.get("red").map_or(0.0, |prop| {
-            match prop {
-                Property::U8(val) => *val as f32 / 255.0,
-                _ => 0.0,
-            }
+        let r = props.map.get("red").map_or(0.0, |prop| match prop {
+            Property::U8(val) => *val as f32 / 255.0,
+            _ => 0.0,
         });
-        let g = props.map.get("green").map_or(0.0, |prop| {
-            match prop {
-                Property::U8(val) => *val as f32 / 255.0,
-                _ => 0.0,
-            }
+        let g = props.map.get("green").map_or(0.0, |prop| match prop {
+            Property::U8(val) => *val as f32 / 255.0,
+            _ => 0.0,
         });
-        let b = props.map.get("blue").map_or(0.0, |prop| {
-            match prop {
-                Property::U8(val) => *val as f32 / 255.0,
-                _ => 0.0,
-            }
+        let b = props.map.get("blue").map_or(0.0, |prop| match prop {
+            Property::U8(val) => *val as f32 / 255.0,
+            _ => 0.0,
         });
         let color = [r, g, b];
 
-        Self {
-            position,
-            color,
-        }
+        Self { position, color }
     }
 }
 
@@ -87,11 +78,15 @@ impl ToPropertyMap for VData {
 
 fn main() {
     let path = "examples/color_cube.ply";
-    let mesh: HalfEdgeMesh<VData, (), ()> = io::ply::load_to_halfedge(path).expect("Failed to load ply mesh");
+    let mesh: HalfEdgeMesh<VData, (), ()> =
+        io::ply::load_to_halfedge(path).expect("Failed to load ply mesh");
 
     println!("# vertices: {}", mesh.num_vertices());
     println!("# edges: {}", mesh.num_edges());
-    println!("# faces (w/ boundary faces): {}", mesh.num_faces_with_boundary());
+    println!(
+        "# faces (w/ boundary faces): {}",
+        mesh.num_faces_with_boundary()
+    );
     println!("# faces (w/o boundary faces): {}", mesh.num_faces());
 
     let path = "color_cube.ply";
