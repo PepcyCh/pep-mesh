@@ -6,13 +6,17 @@ edition = "2018"
 
 [dependencies]
 bytemuck = { version = "1.7", optional = true }
+paste = "1.0"
 ply-rs = "0.1"
 
 [dev-dependencies]
 cgmath = "0.18"
 
 [[example]]
-name = "ply_io"
+name = "ply_io_halfedge"
+
+[[example]]
+name = "ply_io_trimesh"
 
 [[example]]
 name = "catmull_clark"

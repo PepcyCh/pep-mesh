@@ -1,4 +1,4 @@
-use std::{borrow::Cow, collections::HashMap};
+use std::collections::HashMap;
 
 use ply_rs::{
     parser,
@@ -6,34 +6,13 @@ use ply_rs::{
     writer,
 };
 
-use crate::{halfedge::HalfEdgeMesh, io::LoadError};
-
-use super::SaveError;
-
-#[derive(Debug)]
-pub enum Property {
-    I8(i8),
-    U8(u8),
-    I16(i16),
-    U16(u16),
-    I32(i32),
-    U32(u32),
-    F32(f32),
-    F64(f64),
-    I8List(Vec<i8>),
-    U8List(Vec<u8>),
-    I16List(Vec<i16>),
-    U16List(Vec<u16>),
-    I32List(Vec<i32>),
-    U32List(Vec<u32>),
-    F32List(Vec<f32>),
-    F64List(Vec<f64>),
-}
-
-#[derive(Default)]
-pub struct PropertyMap {
-    pub map: HashMap<Cow<'static, str>, Property>,
-}
+use crate::{
+    halfedge::HalfEdgeMesh,
+    io::{
+        ply::{Property, PropertyMap},
+        LoadError, SaveError,
+    },
+};
 
 pub trait FromPropertyMap {
     fn from_proprety_map(props: PropertyMap) -> Self;
@@ -58,36 +37,6 @@ pub trait ToPropertyMap {
 impl ToPropertyMap for () {
     fn to_proprety_map(&self) -> PropertyMap {
         PropertyMap::default()
-    }
-}
-
-impl ply::PropertyAccess for PropertyMap {
-    fn new() -> Self {
-        Self {
-            map: HashMap::new(),
-        }
-    }
-
-    fn set_property(&mut self, key: String, property: ply::Property) {
-        let prop = match property {
-            ply::Property::Char(val) => Property::I8(val),
-            ply::Property::UChar(val) => Property::U8(val),
-            ply::Property::Short(val) => Property::I16(val),
-            ply::Property::UShort(val) => Property::U16(val),
-            ply::Property::Int(val) => Property::I32(val),
-            ply::Property::UInt(val) => Property::U32(val),
-            ply::Property::Float(val) => Property::F32(val),
-            ply::Property::Double(val) => Property::F64(val),
-            ply::Property::ListChar(val) => Property::I8List(val),
-            ply::Property::ListUChar(val) => Property::U8List(val),
-            ply::Property::ListShort(val) => Property::I16List(val),
-            ply::Property::ListUShort(val) => Property::U16List(val),
-            ply::Property::ListInt(val) => Property::I32List(val),
-            ply::Property::ListUInt(val) => Property::U32List(val),
-            ply::Property::ListFloat(val) => Property::F32List(val),
-            ply::Property::ListDouble(val) => Property::F64List(val),
-        };
-        self.map.insert(key.into(), prop);
     }
 }
 
@@ -217,7 +166,7 @@ where
         let mut vertex_element = ply::ElementDef::new("vertex".to_owned());
         let vdata = mesh.vertices().next().unwrap().data(mesh).to_proprety_map();
         for (k, v) in &vdata.map {
-            let prop = ply::PropertyDef::new(k.to_string(), get_property_type(v));
+            let prop = ply::PropertyDef::new(k.to_string(), super::get_property_type(v));
             vertex_element.properties.add(prop);
         }
         ply.header.elements.add(vertex_element);
@@ -227,7 +176,7 @@ where
             let mut vertex = ply::DefaultElement::new();
             let vdata = mesh.vertex_data(&vref).to_proprety_map();
             for (k, v) in &vdata.map {
-                vertex.insert(k.to_string(), get_ply_property(v));
+                vertex.insert(k.to_string(), super::get_ply_property(v));
             }
             vertices.push(vertex);
         }
@@ -244,7 +193,7 @@ where
         face_element.properties.add(prop);
         let fdata = mesh.faces().next().unwrap().data(mesh).to_proprety_map();
         for (k, v) in &fdata.map {
-            let prop = ply::PropertyDef::new(k.to_string(), get_property_type(v));
+            let prop = ply::PropertyDef::new(k.to_string(), super::get_property_type(v));
             face_element.properties.add(prop);
         }
         ply.header.elements.add(face_element);
@@ -272,7 +221,7 @@ where
             );
             let fdata = mesh.face_data(&fref).to_proprety_map();
             for (k, v) in &fdata.map {
-                face.insert(k.to_string(), get_ply_property(v));
+                face.insert(k.to_string(), super::get_ply_property(v));
             }
             faces.push(face);
         }
@@ -298,7 +247,7 @@ where
             .data(mesh)
             .to_proprety_map();
         for (k, v) in &edata.map {
-            let prop = ply::PropertyDef::new(k.to_string(), get_property_type(v));
+            let prop = ply::PropertyDef::new(k.to_string(), super::get_property_type(v));
             edge_element.properties.add(prop);
         }
         ply.header.elements.add(edge_element);
@@ -317,7 +266,7 @@ where
             edge.insert("vertex2".to_owned(), ply::Property::Int(v2 as i32));
             let edata = mesh.edge_data(&heref).to_proprety_map();
             for (k, v) in &edata.map {
-                edge.insert(k.to_string(), get_ply_property(v));
+                edge.insert(k.to_string(), super::get_ply_property(v));
             }
             edges.push(edge);
         }
@@ -335,62 +284,4 @@ where
         .map_err(|err| SaveError::new(err.to_string()))?;
 
     Ok(())
-}
-
-fn get_property_type(prop: &Property) -> ply::PropertyType {
-    match prop {
-        Property::I8(_) => ply::PropertyType::Scalar(ply::ScalarType::Char),
-        Property::U8(_) => ply::PropertyType::Scalar(ply::ScalarType::UChar),
-        Property::I16(_) => ply::PropertyType::Scalar(ply::ScalarType::Short),
-        Property::U16(_) => ply::PropertyType::Scalar(ply::ScalarType::UShort),
-        Property::I32(_) => ply::PropertyType::Scalar(ply::ScalarType::Int),
-        Property::U32(_) => ply::PropertyType::Scalar(ply::ScalarType::UInt),
-        Property::F32(_) => ply::PropertyType::Scalar(ply::ScalarType::Float),
-        Property::F64(_) => ply::PropertyType::Scalar(ply::ScalarType::Double),
-        Property::I8List(_) => {
-            ply::PropertyType::List(ply::ScalarType::UChar, ply::ScalarType::Char)
-        }
-        Property::U8List(_) => {
-            ply::PropertyType::List(ply::ScalarType::UChar, ply::ScalarType::UChar)
-        }
-        Property::I16List(_) => {
-            ply::PropertyType::List(ply::ScalarType::UChar, ply::ScalarType::Short)
-        }
-        Property::U16List(_) => {
-            ply::PropertyType::List(ply::ScalarType::UChar, ply::ScalarType::UShort)
-        }
-        Property::I32List(_) => {
-            ply::PropertyType::List(ply::ScalarType::UChar, ply::ScalarType::Int)
-        }
-        Property::U32List(_) => {
-            ply::PropertyType::List(ply::ScalarType::UChar, ply::ScalarType::UInt)
-        }
-        Property::F32List(_) => {
-            ply::PropertyType::List(ply::ScalarType::UChar, ply::ScalarType::Float)
-        }
-        Property::F64List(_) => {
-            ply::PropertyType::List(ply::ScalarType::UChar, ply::ScalarType::Double)
-        }
-    }
-}
-
-fn get_ply_property(prop: &Property) -> ply::Property {
-    match prop {
-        Property::I8(val) => ply::Property::Char(*val),
-        Property::U8(val) => ply::Property::UChar(*val),
-        Property::I16(val) => ply::Property::Short(*val),
-        Property::U16(val) => ply::Property::UShort(*val),
-        Property::I32(val) => ply::Property::Int(*val),
-        Property::U32(val) => ply::Property::UInt(*val),
-        Property::F32(val) => ply::Property::Float(*val),
-        Property::F64(val) => ply::Property::Double(*val),
-        Property::I8List(val) => ply::Property::ListChar(val.clone()),
-        Property::U8List(val) => ply::Property::ListUChar(val.clone()),
-        Property::I16List(val) => ply::Property::ListShort(val.clone()),
-        Property::U16List(val) => ply::Property::ListUShort(val.clone()),
-        Property::I32List(val) => ply::Property::ListInt(val.clone()),
-        Property::U32List(val) => ply::Property::ListUInt(val.clone()),
-        Property::F32List(val) => ply::Property::ListFloat(val.clone()),
-        Property::F64List(val) => ply::Property::ListDouble(val.clone()),
-    }
 }
